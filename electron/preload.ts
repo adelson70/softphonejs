@@ -22,3 +22,13 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+// --------- Expose storage API to the Renderer process ---------
+contextBridge.exposeInMainWorld('storage', {
+  get(key: string) {
+    return ipcRenderer.invoke('store:get', key)
+  },
+  set(key: string, value: any) {
+    return ipcRenderer.invoke('store:set', key, value)
+  },
+})
