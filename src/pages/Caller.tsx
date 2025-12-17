@@ -1,13 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Keyboard, Mic, MicOff, PhoneCall, PhoneOff, PhoneForwarded, Volume2, VolumeX } from 'lucide-react'
+import {
+  Keyboard,
+  Mic,
+  MicOff,
+  PhoneCall,
+  PhoneOff,
+  Volume2,
+  VolumeX,
+  MessageSquare,
+  Clock,
+  BellOff,
+  X,
+  Video,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import { TopBar } from '../components/ui/TopBar'
 import { DialInput } from '../components/ui/DialInput'
 import { DialPad } from '../components/ui/DialPad'
 import { ActionButton } from '../components/ui/ActionButton'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { InputText } from '../components/ui/InputText'
+import { Avatar } from '../components/ui/Avatar'
 import { useSip } from '../sip/react/useSip'
 import { clearStorage } from '../services/storageService'
 
@@ -16,15 +29,36 @@ export default function Caller() {
   const sip = useSip()
 
   const [dialValue, setDialValue] = useState('')
-  const [transferTo, setTransferTo] = useState('')
   const [showKeypad, setShowKeypad] = useState(true)
-  const [showTransfer, setShowTransfer] = useState(false)
   const [endedBanner, setEndedBanner] = useState(false)
   const prevCallStatusRef = useRef(sip.snapshot.callStatus)
 
   const canCall = useMemo(() => dialValue.trim().length > 0, [dialValue])
   const inCall = sip.snapshot.callStatus !== 'idle'
   const isEstablished = sip.snapshot.callStatus === 'established'
+  const isIncoming = sip.snapshot.callStatus === 'incoming'
+  const isOutgoing = sip.snapshot.callStatus === 'dialing' || sip.snapshot.callStatus === 'ringing'
+
+  // Informações do contato na chamada estabelecida
+  const establishedContactName = useMemo(() => {
+    if (!isEstablished) return null
+    if (sip.snapshot.callDirection === 'incoming') {
+      return (
+        sip.snapshot.incoming?.displayName ??
+        sip.snapshot.incoming?.user ??
+        'Desconhecido'
+      )
+    }
+    return dialValue || 'Desconhecido'
+  }, [isEstablished, sip.snapshot.callDirection, sip.snapshot.incoming, dialValue])
+
+  const establishedContactNumber = useMemo(() => {
+    if (!isEstablished) return null
+    if (sip.snapshot.callDirection === 'incoming') {
+      return sip.snapshot.incoming?.user ?? sip.snapshot.incoming?.uri ?? ''
+    }
+    return dialValue || ''
+  }, [isEstablished, sip.snapshot.callDirection, sip.snapshot.incoming, dialValue])
 
   useEffect(() => {
     const prev = prevCallStatusRef.current
@@ -75,36 +109,13 @@ export default function Caller() {
     navigate('/')
   }
 
-  async function handleTransferBlind() {
-    if (!transferTo.trim()) return
-    await sip.transferBlind(transferTo.trim())
-  }
-
-  async function handleTransferAttended() {
-    if (!transferTo.trim()) return
-    await sip.transferAttended(transferTo.trim())
-  }
-
-  function statusLabel() {
-    switch (sip.snapshot.callStatus) {
-      case 'dialing':
-        return 'Chamando...'
-      case 'ringing':
-        return 'Chamando...'
-      case 'incoming':
-        return 'Recebendo ligação...'
-      case 'established':
-        return 'Em ligação'
-      case 'terminating':
-        return 'Encerrando...'
-      default:
-        return 'Pronto'
-    }
-  }
-
   function formatDuration(totalSec: number) {
-    const m = Math.floor(totalSec / 60)
+    const h = Math.floor(totalSec / 3600)
+    const m = Math.floor((totalSec % 3600) / 60)
     const s = totalSec % 60
+    if (h > 0) {
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
@@ -138,140 +149,302 @@ export default function Caller() {
           </div>
         ) : null}
 
-        {/* Ações estilo celular (durante chamada) */}
-        {inCall ? (
-          <Card className="mb-4 border border-white/5 p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted">{statusLabel()}</p>
-                {isEstablished ? <p className="text-xs text-muted">{formatDuration(sip.callDurationSec)}</p> : null}
-              </div>
+        {/* Estado Established - Chamada Ativa */}
+        {isEstablished ? (
+          <div className="flex h-full flex-col items-center justify-center px-4 py-8">
+            {/* Duração no topo */}
+            <div className="mb-4 flex items-center gap-2 text-primary">
+              <PhoneCall size={16} />
+              <span className="text-sm font-medium">{formatDuration(sip.callDurationSec)}</span>
             </div>
 
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setShowKeypad((p) => !p)}
-                className="rounded-xl border border-white/10 bg-background px-3 py-2 text-xs font-semibold text-text transition hover:bg-white/5"
-              >
-                <div className="mx-auto flex w-full items-center justify-center gap-2">
-                  <Keyboard size={16} aria-hidden="true" />
-                  <span>Teclar</span>
-                </div>
-              </button>
+            {/* Nome e número */}
+            <div className="mb-6 text-center">
+              <h2 className="mb-2 text-2xl font-semibold text-text">{establishedContactName}</h2>
+              <p className="text-lg text-primary">{establishedContactNumber}</p>
+            </div>
+
+            {/* Foto de perfil */}
+            <div className="mb-8">
+              <Avatar size="xl" name={establishedContactName || undefined} />
+            </div>
+
+            {/* Opções de controle - Primeira linha */}
+            <div className="mb-6 grid grid-cols-3 gap-6">
               <button
                 type="button"
                 onClick={() => void sip.toggleMute()}
-                className="rounded-xl border border-white/10 bg-background px-3 py-2 text-xs font-semibold text-text transition hover:bg-white/5"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Mudo"
               >
-                <div className="mx-auto flex w-full items-center justify-center gap-2">
-                  {sip.snapshot.muted ? <MicOff size={16} aria-hidden="true" /> : <Mic size={16} aria-hidden="true" />}
-                  <span>Mudo</span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  {sip.snapshot.muted ? <MicOff size={20} /> : <Mic size={20} />}
                 </div>
+                <span className="text-xs font-medium">Mudo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowKeypad((p) => !p)}
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Teclado"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Keyboard size={20} />
+                </div>
+                <span className="text-xs font-medium">Teclado</span>
               </button>
               <button
                 type="button"
                 onClick={() => sip.toggleSpeaker()}
-                className="rounded-xl border border-white/10 bg-background px-3 py-2 text-xs font-semibold text-text transition hover:bg-white/5"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Viva voz"
               >
-                <div className="mx-auto flex w-full items-center justify-center gap-2">
-                  {sip.speakerOn ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
-                  <span>Viva voz</span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  {sip.speakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
                 </div>
+                <span className="text-xs font-medium">Viva voz</span>
+              </button>
+            </div>
+
+            {/* Opções de controle - Segunda linha */}
+            <div className="mb-8 grid grid-cols-3 gap-6">
+              <button
+                type="button"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Video chamada"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Video size={20} />
+                </div>
+                <span className="text-xs font-medium">Video chamada</span>
               </button>
               <button
                 type="button"
-                onClick={() => setShowTransfer((p) => !p)}
-                className="rounded-xl border border-white/10 bg-background px-3 py-2 text-xs font-semibold text-text transition hover:bg-white/5"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Adicionar chamada"
               >
-                <div className="mx-auto flex w-full items-center justify-center gap-2">
-                  <PhoneForwarded size={16} aria-hidden="true" />
-                  <span>Transferir</span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <UserPlus size={20} />
                 </div>
+                <span className="text-xs font-medium">Adicionar chamada</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleContactsClick}
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Contatos"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Users size={20} />
+                </div>
+                <span className="text-xs font-medium">Contatos</span>
               </button>
             </div>
 
-            {showTransfer ? (
-              <div className="mt-4 flex flex-col gap-2">
-                <InputText
-                  value={transferTo}
-                  onChange={setTransferTo}
-                  placeholder="Transferir para (ramal/número)"
-                  name="transferTo"
-                />
-                <div className="flex items-center gap-2">
-                  <Button type="button" variant="primary" onClick={() => void handleTransferBlind()}>
-                    Cega
-                  </Button>
-                  <Button type="button" variant="primary" onClick={() => void handleTransferAttended()}>
-                    Assistida
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </Card>
+            {/* Botão de encerrar */}
+            <button
+              type="button"
+              onClick={() => void sip.hangup()}
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-danger text-background transition-colors hover:bg-danger/90"
+              aria-label="Encerrar chamada"
+            >
+              <PhoneOff size={28} strokeWidth={2.5} />
+            </button>
+          </div>
         ) : null}
 
-        {/* Status / chamada recebida */}
+        {/* Estado Incoming - Recebendo Chamada */}
         {sip.snapshot.callStatus === 'incoming' ? (
-          <Card className="mb-4 border border-white/5 p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted">Chamada recebida</p>
-                <p className="text-base font-semibold">
-                  {sip.snapshot.incoming?.displayName ??
-                    sip.snapshot.incoming?.user ??
-                    sip.snapshot.incoming?.uri ??
-                    'Desconhecido'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="primary" onClick={() => void sip.answer()}>
-                  Atender
-                </Button>
-                <Button type="button" variant="danger" onClick={() => void sip.reject()}>
-                  Recusar
-                </Button>
-              </div>
+          <div className="flex h-full flex-col items-center justify-center px-4 py-8">
+            {/* Foto de perfil com animação */}
+            <div className="mb-8">
+              <Avatar
+                size="xl"
+                name={
+                  sip.snapshot.incoming?.displayName ??
+                  sip.snapshot.incoming?.user ??
+                  'Desconhecido'
+                }
+                showRipple={true}
+              />
             </div>
-          </Card>
+
+            {/* Nome e número */}
+            <div className="mb-8 text-center">
+              <h2 className="mb-2 text-2xl font-semibold text-text">
+                {sip.snapshot.incoming?.displayName ??
+                  sip.snapshot.incoming?.user ??
+                  'Desconhecido'}
+              </h2>
+              <p className="text-lg text-primary">
+                {sip.snapshot.incoming?.user ?? sip.snapshot.incoming?.uri ?? ''}
+              </p>
+            </div>
+
+            {/* Botões de ação no topo */}
+            <div className="mb-12 flex items-center gap-8">
+              <button
+                type="button"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Mensagem"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <MessageSquare size={20} />
+                </div>
+                <span className="text-xs font-medium">Mensagem</span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Lembrete"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Clock size={20} />
+                </div>
+                <span className="text-xs font-medium">Lembrete</span>
+              </button>
+            </div>
+
+            {/* Botões principais de ação */}
+            <div className="mb-8 flex items-center gap-8">
+              <button
+                type="button"
+                onClick={() => void sip.reject()}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-text transition-colors hover:bg-white/20"
+                aria-label="Recusar"
+              >
+                <X size={28} strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={() => void sip.answer()}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-success text-background transition-colors hover:bg-success/90"
+                aria-label="Atender"
+              >
+                <PhoneCall size={28} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Indicador de modo silencioso */}
+            <div className="flex items-center gap-2 text-muted">
+              <BellOff size={16} />
+              <span className="text-xs font-medium">Silencioso</span>
+            </div>
+          </div>
         ) : null}
 
-        <section className="mt-[5vh] flex-none md:mt-10">
-          <DialInput value={dialValue} onChange={handleDialChange} autoFocus disabled={inCall} />
-        </section>
+        {/* Estado Outgoing - Chamando */}
+        {(sip.snapshot.callStatus === 'dialing' || sip.snapshot.callStatus === 'ringing') ? (
+          <div className="flex h-full flex-col items-center justify-center px-4 py-8">
+            {/* Foto de perfil com animação */}
+            <div className="mb-8">
+              <Avatar size="xl" name={dialValue} showRipple={true} />
+            </div>
 
-        <section className="mt-8 flex min-h-0 flex-1 w-full flex-col items-stretch justify-end gap-10">
-          {showKeypad ? (
+            {/* Nome e número */}
+            <div className="mb-8 text-center">
+              <h2 className="mb-2 text-2xl font-semibold text-text">{dialValue || 'Chamando...'}</h2>
+              <p className="text-lg text-muted">
+                {sip.snapshot.callStatus === 'dialing' ? 'Chamando...' : 'Tocando...'}
+              </p>
+            </div>
+
+            {/* Botões de ação no topo */}
+            <div className="mb-12 flex items-center gap-8">
+              <button
+                type="button"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Mensagem"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <MessageSquare size={20} />
+                </div>
+                <span className="text-xs font-medium">Mensagem</span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Lembrete"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Clock size={20} />
+                </div>
+                <span className="text-xs font-medium">Lembrete</span>
+              </button>
+            </div>
+
+            {/* Botão de cancelar */}
+            <div className="mb-8">
+              <button
+                type="button"
+                onClick={() => void sip.hangup()}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-text transition-colors hover:bg-white/20"
+                aria-label="Cancelar"
+              >
+                <X size={28} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Indicador de modo silencioso */}
+            <div className="flex items-center gap-2 text-muted">
+              <BellOff size={16} />
+              <span className="text-xs font-medium">Silencioso</span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Discador - apenas quando idle */}
+        {!inCall ? (
+          <>
+            <section className="mt-[5vh] flex-none md:mt-10">
+              <DialInput value={dialValue} onChange={handleDialChange} autoFocus disabled={inCall} />
+            </section>
+
+            <section className="mt-8 flex min-h-0 flex-1 w-full flex-col items-stretch justify-end gap-10">
+              {showKeypad ? (
+                <DialPad
+                  className="mx-auto w-full max-w-sm"
+                  onKeyPress={(k) => {
+                    appendKey(k)
+                  }}
+                  disabled={false}
+                />
+              ) : null}
+
+              <div className="flex items-center justify-center gap-6">
+                <ActionButton
+                  variant="success"
+                  icon={<PhoneCall size={28} strokeWidth={2} aria-hidden="true" />}
+                  onClick={handleCall}
+                  ariaLabel="Chamar"
+                  disabled={!canCall || inCall || sip.snapshot.connection !== 'registered'}
+                />
+                <ActionButton
+                  variant="danger"
+                  icon={<PhoneOff size={28} strokeWidth={2} aria-hidden="true" />}
+                  onClick={handleHangup}
+                  ariaLabel="Encerrar"
+                  disabled={!inCall}
+                />
+              </div>
+            </section>
+          </>
+        ) : null}
+
+        {/* Keypad durante chamada estabelecida (se habilitado) */}
+        {isEstablished && showKeypad ? (
+          <div className="fixed bottom-24 left-1/2 z-20 -translate-x-1/2">
             <DialPad
               className="mx-auto w-full max-w-sm"
               onKeyPress={(k) => {
                 // Sempre toca o som local do DTMF.
                 // Só envia DTMF remoto quando a chamada estiver estabelecida.
-                sip.sendDtmf(k, { playLocal: true, sendRemote: isEstablished })
-                appendKey(k)
+                sip.sendDtmf(k, { playLocal: true, sendRemote: true })
               }}
-              disabled={sip.snapshot.callStatus === 'incoming' || sip.snapshot.callStatus === 'dialing' || sip.snapshot.callStatus === 'ringing'}
-            />
-          ) : null}
-
-          <div className="flex items-center justify-center gap-6">
-            <ActionButton
-              variant="success"
-              icon={<PhoneCall size={28} strokeWidth={2} aria-hidden="true" />}
-              onClick={handleCall}
-              ariaLabel="Chamar"
-              disabled={!canCall || inCall || sip.snapshot.connection !== 'registered'}
-            />
-            <ActionButton
-              variant="danger"
-              icon={<PhoneOff size={28} strokeWidth={2} aria-hidden="true" />}
-              onClick={handleHangup}
-              ariaLabel="Encerrar"
-              disabled={!inCall}
+              disabled={false}
             />
           </div>
-        </section>
+        ) : null}
       </main>
     </div>
   )
