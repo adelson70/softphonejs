@@ -9,5 +9,9 @@ export function setupStoreIPC(): void {
   ipcMain.handle('store:set', (_event, key: string, value: any) => {
     appStore.set(key, value)
   })
+
+  ipcMain.handle('store:clear', () => {
+    appStore.clear()
+  })
 }
 

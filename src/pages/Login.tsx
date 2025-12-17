@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { InputText } from '../components/ui/InputText'
 import { InputPassword } from '../components/ui/InputPassword'
-import { Link } from 'react-router-dom'
+import { loadSipConfig, saveSipConfig } from '../sip/config/sipConfigStore'
+import { useSip } from '../sip/react/useSip'
+import { useNavigate } from 'react-router-dom'
 
 function UserIcon() {
   return (
@@ -73,26 +75,87 @@ function GlobeIcon() {
 }
 
 export default function Login() {
+  const navigate = useNavigate()
+  const sip = useSip()
+  const autoTriedRef = useRef(false)
   const [sipUser, setSipUser] = useState('')
   const [sipPassword, setSipPassword] = useState('')
   const [sipDomain, setSipDomain] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    loadSipConfig().then((cfg) => {
+      if (!mounted || !cfg) return
+      setSipUser(cfg.username ?? '')
+      setSipPassword(cfg.password ?? '')
+      setSipDomain(cfg.server ?? '')
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  // Auto-registro: se houver credenciais salvas, tenta registrar e leva para Caller.
+  useEffect(() => {
+    if (sip.snapshot.connection === 'registered') {
+      navigate('/caller')
+      return
+    }
+    if (autoTriedRef.current) return
+    autoTriedRef.current = true
+
+    ;(async () => {
+      const cfg = await loadSipConfig()
+      if (!cfg?.username || !cfg?.password || !cfg?.server) return
+      setError(null)
+      setIsSubmitting(true)
+      try {
+        await sip.connectAndRegister({
+          username: cfg.username,
+          password: cfg.password,
+          server: cfg.server,
+        })
+        navigate('/caller')
+      } catch {
+        // Falhou -> fica no login para o usuário corrigir dados
+      } finally {
+        setIsSubmitting(false)
+      }
+    })()
+  }, [navigate, sip, sip.snapshot.connection])
 
   const canSubmit = useMemo(() => {
     return sipUser.trim().length > 0 && sipPassword.length > 0 && sipDomain.trim().length > 0
   }, [sipUser, sipPassword, sipDomain])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // UI only (sem lógica SIP)
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      await sip.connectAndRegister({
+        username: sipUser.trim(),
+        password: sipPassword,
+        server: sipDomain.trim(),
+      })
+      await saveSipConfig({
+        username: sipUser.trim(),
+        password: sipPassword,
+        server: sipDomain.trim(),
+        status: 'online',
+      })
+      navigate('/caller')
+    } catch (err: any) {
+      setError(err?.message ?? 'Falha no registro')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <div className="relative h-screen overflow-hidden bg-background text-text">
-      <Link to="/caller" className="absolute right-4 top-4">
-        <Button type="button" variant="primary">
-          tela caller
-        </Button>
-      </Link>
       <div className="flex h-full items-center justify-center p-6">
         <Card className="w-full max-w-md border border-white/5">
           <div className="space-y-2">
@@ -131,9 +194,10 @@ export default function Login() {
             />
 
             <div className="pt-2">
-              <Button type="submit" variant="primary" disabled={!canSubmit}>
-                Registrar
+              <Button type="submit" variant="primary" disabled={!canSubmit || isSubmitting}>
+                {isSubmitting ? 'Registrando...' : 'Registrar'}
               </Button>
+              {error ? <p className="mt-3 text-xs text-danger text-center">{error}</p> : null}
               <p className="mt-3 text-xs text-muted text-center">
                 Dica: use o domínio do seu provedor/servidor 
                 <br />

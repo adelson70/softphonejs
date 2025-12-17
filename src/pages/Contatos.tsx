@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TopBar } from '../components/ui/TopBar'
 import { Card } from '../components/ui/Card'
+import { useSip } from '../sip/react/useSip'
+import { clearStorage } from '../services/storageService'
 
 function ArrowLeftIcon() {
   return (
@@ -19,6 +21,7 @@ function ArrowLeftIcon() {
 
 export default function Contatos() {
   const navigate = useNavigate()
+  const sip = useSip()
 
   function handleBackToDialer() {
     navigate('/caller')
@@ -38,7 +41,11 @@ export default function Contatos() {
         active="contacts"
         onHistoryClick={() => navigate('/historico')}
         onContactsClick={() => navigate('/contatos')}
-        onLogout={() => navigate('/')}
+        onLogout={() => {
+          void clearStorage().catch(() => {})
+          void sip.unregisterAndDisconnect().catch(() => {})
+          navigate('/')
+        }}
       />
 
       <main className="mx-auto h-full max-w-2xl px-4 pb-6 pt-16">

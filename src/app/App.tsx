@@ -1,7 +1,12 @@
 import AppRoutes from './routes'
+import { SipProvider } from '../sip/react/SipProvider'
 
 function App() {
-  return <AppRoutes />
+  return (
+    <SipProvider>
+      <AppRoutes />
+    </SipProvider>
+  )
 }
 
 export default App

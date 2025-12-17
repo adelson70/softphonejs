@@ -31,4 +31,7 @@ contextBridge.exposeInMainWorld('storage', {
   set(key: string, value: any) {
     return ipcRenderer.invoke('store:set', key, value)
   },
+  clear() {
+    return ipcRenderer.invoke('store:clear')
+  },
 })

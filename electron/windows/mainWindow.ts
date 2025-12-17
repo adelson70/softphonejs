@@ -6,7 +6,6 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const MAIN_DIR = path.join(__dirname, '..')
 
 export function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -17,7 +16,9 @@ export function createMainWindow(): BrowserWindow {
     maximizable: false,
     fullscreenable: false,
     webPreferences: {
-      preload: path.join(MAIN_DIR, 'preload.mjs'),
+      // `preload.mjs` é gerado pelo vite-plugin-electron em `dist-electron/`
+      // e fica no mesmo diretório do `main.js` em runtime.
+      preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
