@@ -34,7 +34,7 @@ export function DialInput({
   }
 
   return (
-    <div className={cx('relative w-full', className)}>
+    <div className={cx('relative w-full text-center', className)}>
       <input
         ref={inputRef}
         value={value}
@@ -46,7 +46,7 @@ export function DialInput({
         type="text"
         inputMode="text"
         className={cx(
-          'h-14 w-full rounded-2xl border bg-background pl-5 pr-14 text-text',
+          'h-14 w-full rounded-2xl border bg-background px-14 text-text text-center',
           'border-[#1E293B]',
           'text-[22px] leading-none tracking-wide',
           'placeholder:text-muted',
@@ -68,7 +68,7 @@ export function DialInput({
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
           )}
         >
-          <Delete size={20} aria-hidden="true" />
+          <Delete size={28} aria-hidden="true" />
         </button>
       ) : null}
     </div>
