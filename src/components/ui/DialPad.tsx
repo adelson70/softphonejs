@@ -4,6 +4,7 @@ type DialPadProps = {
   onKeyPress: (key: string) => void
   className?: string
   disabled?: boolean
+  size?: 'default' | 'small'
 }
 
 const KEYPAD_KEYS: Array<{ key: string; letters?: string }> = [
@@ -25,11 +26,18 @@ function cx(...classes: Array<string | undefined | false>) {
   return classes.filter(Boolean).join(' ')
 }
 
-export function DialPad({ onKeyPress, className, disabled }: DialPadProps) {
+export function DialPad({ onKeyPress, className, disabled, size = 'default' }: DialPadProps) {
   return (
-    <div className={cx('grid w-full grid-cols-3 gap-4', className)} role="group" aria-label="Discador numérico">
+    <div className={cx('grid w-full grid-cols-3', className)} role="group" aria-label="Discador numérico">
       {KEYPAD_KEYS.map(({ key, letters }) => (
-        <DialButton key={key} label={key} letters={letters} disabled={disabled} onClick={() => onKeyPress(key)} />
+        <DialButton 
+          key={key} 
+          label={key} 
+          letters={letters} 
+          disabled={disabled} 
+          onClick={() => onKeyPress(key)}
+          size={size}
+        />
       ))}
     </div>
   )

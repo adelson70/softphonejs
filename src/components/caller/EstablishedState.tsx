@@ -74,159 +74,99 @@ export function EstablishedState({
       <div className="flex-1" />
 
       {/* Container com painel e botão de cancelar na parte inferior */}
-      <div className="mt-auto flex shrink-0 flex-col items-center">
-        {/* Painel escuro arredondado com controles */}
-        <div className={`mb-3 flex flex-col overflow-hidden rounded-3xl bg-card/80 px-6 py-6 shadow-2xl sm:mb-4 ${showKeypad ? 'w-full' : ''}`}>
-          {showKeypad ? (
-            <>
-              {/* Dialpad dentro do painel */}
-              <div className="flex max-h-64 items-start justify-center overflow-y-auto pb-4">
-                <div className="w-full max-w-sm">
-                  <DialPad
-                    className="w-full"
-                    onKeyPress={(k) => {
-                      onSendDtmf(k)
-                    }}
-                    disabled={false}
-                  />
-                </div>
-              </div>
-
-              {/* Botões de controle abaixo do dialpad em linha */}
-              <div className="flex shrink-0 items-center justify-center gap-6 border-t border-white/10 pt-4">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onToggleSpeaker()
-                  }}
-                  className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                  aria-label={speakerOn ? 'Desativar viva-voz' : 'Ativar viva-voz'}
-                >
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
-                      speakerOn ? 'bg-primary/20 border-primary/30' : ''
-                    }`}
-                  >
-                    <Volume2 size={20} />
-                  </div>
-                  <span className="text-xs font-medium">Viva-voz</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onToggleMute()
-                  }}
-                  className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                  aria-label={isMuted ? 'Ativar microfone' : 'Desativar microfone'}
-                >
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
-                      isMuted ? 'bg-primary/20 border-primary/30' : ''
-                    }`}
-                  >
-                    {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-                  </div>
-                  <span className="text-xs font-medium">Mudo</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onToggleKeypad()
-                  }}
-                  className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                  aria-label="Ocultar teclado"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14">
-                    <Grid3x3 size={20} />
-                  </div>
-                  <span className="text-xs font-medium">Ocultar</span>
-                </button>
-              </div>
-            </>
-          ) : (
-            /* Botões em linha quando keypad está oculto */
-            <div className="flex shrink-0 items-center justify-center gap-8">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onToggleMute()
+      <div className="relative mt-auto flex shrink-0 flex-col items-center">
+        {/* Dialpad acima do painel quando showKeypad é true - posicionado absolutamente */}
+        {showKeypad && (
+          <div className="absolute bottom-full left-1/2 mb-0 w-full -translate-x-1/2">
+            <div className="overflow-hidden rounded-t-3xl bg-card/80 px-6 py-2 shadow-2xl">
+              <DialPad
+                className="w-full gap-1.5"
+                size="small"
+                onKeyPress={(k) => {
+                  onSendDtmf(k)
                 }}
-                className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                aria-label={isMuted ? 'Ativar microfone' : 'Desativar microfone'}
-              >
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
-                    isMuted ? 'bg-primary/20 border-primary/30' : ''
-                  }`}
-                >
-                  {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-                </div>
-                <span className="text-xs font-medium">Mudo</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onToggleKeypad()
-                }}
-                className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                aria-label="Mostrar teclado"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14">
-                  <Grid3x3 size={20} />
-                </div>
-                <span className="text-xs font-medium">Teclado</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onToggleSpeaker()
-                }}
-                className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                aria-label={speakerOn ? 'Desativar viva-voz' : 'Ativar viva-voz'}
-              >
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
-                    speakerOn ? 'bg-primary/20 border-primary/30' : ''
-                  }`}
-                >
-                  <Volume2 size={20} />
-                </div>
-                <span className="text-xs font-medium">Viva-voz</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onTransferOpen()
-                }}
-                className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
-                aria-label="Transferir chamada"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14">
-                  <Repeat size={20} />
-                </div>
-                <span className="text-xs font-medium">Transferir</span>
-              </button>
+                disabled={false}
+              />
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Painel escuro arredondado com controles - sempre mesmo tamanho */}
+        <div className={`mb-3 flex shrink-0 flex-col overflow-hidden bg-card/80 px-6 py-6 shadow-2xl sm:mb-4 ${showKeypad ? 'rounded-b-3xl rounded-t-none' : 'rounded-3xl'}`}>
+          {/* Botões sempre os mesmos 4 na mesma ordem */}
+          <div className="flex shrink-0 items-center justify-center gap-8">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleMute()
+              }}
+              className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
+              aria-label={isMuted ? 'Ativar microfone' : 'Desativar microfone'}
+            >
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
+                  isMuted ? 'bg-primary/20 border-primary/30' : ''
+                }`}
+              >
+                {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+              </div>
+              <span className="text-xs font-medium">Mudo</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleKeypad()
+              }}
+              className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
+              aria-label={showKeypad ? 'Ocultar teclado' : 'Mostrar teclado'}
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14">
+                <Grid3x3 size={20} />
+              </div>
+              <span className="text-xs font-medium">{showKeypad ? 'Ocultar' : 'Teclado'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggleSpeaker()
+              }}
+              className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
+              aria-label={speakerOn ? 'Desativar viva-voz' : 'Ativar viva-voz'}
+            >
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14 ${
+                  speakerOn ? 'bg-primary/20 border-primary/30' : ''
+                }`}
+              >
+                <Volume2 size={20} />
+              </div>
+              <span className="text-xs font-medium">Viva-voz</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onTransferOpen()
+              }}
+              className="flex flex-col items-center gap-2 text-text transition-colors hover:text-primary"
+              aria-label="Transferir chamada"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background/50 sm:h-14 sm:w-14">
+                <Repeat size={20} />
+              </div>
+              <span className="text-xs font-medium">Transferir</span>
+            </button>
+          </div>
         </div>
 
         {/* Botão de terminar ligação */}

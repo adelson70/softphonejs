@@ -4,13 +4,18 @@ type DialButtonProps = {
   onClick: () => void
   className?: string
   disabled?: boolean
+  size?: 'default' | 'small'
 }
 
 function cx(...classes: Array<string | undefined | false>) {
   return classes.filter(Boolean).join(' ')
 }
 
-export function DialButton({ label, letters, onClick, className, disabled }: DialButtonProps) {
+export function DialButton({ label, letters, onClick, className, disabled, size = 'default' }: DialButtonProps) {
+  const sizeClasses = size === 'small' 
+    ? 'h-8 text-base' 
+    : 'h-16 text-2xl'
+  
   return (
     <button
       type="button"
@@ -18,7 +23,8 @@ export function DialButton({ label, letters, onClick, className, disabled }: Dia
       disabled={disabled}
       onClick={onClick}
       className={cx(
-        'inline-flex w-full aspect-square h-16 flex-col items-center justify-center rounded-2xl',
+        'inline-flex w-full aspect-square flex-col items-center justify-center rounded-xl',
+        sizeClasses,
         'bg-card text-text',
         'border border-white/5',
         'transition',
@@ -28,8 +34,8 @@ export function DialButton({ label, letters, onClick, className, disabled }: Dia
         className
       )}
     >
-      <span className="text-2xl font-semibold">{label}</span>
-      {letters && <span className="text-xs font-normal text-muted">{letters}</span>}
+      <span className={`${size === 'small' ? 'text-base leading-none' : 'text-2xl'} font-semibold`}>{label}</span>
+      {letters && <span className={`${size === 'small' ? 'text-[9px] leading-tight mt-0.5' : 'text-xs'} font-normal text-muted`}>{letters}</span>}
     </button>
   )
 }
