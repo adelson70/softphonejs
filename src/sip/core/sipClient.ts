@@ -317,8 +317,11 @@ export class SipClient {
             // Limpa o estado imediatamente para parar o áudio
             this.clearCallState()
             
-            // 487 Request Terminated é comum quando o número chamado desliga
-            if (statusCode === 487) {
+            // 486 Busy Here - detecta ocupado para tocar som de busy
+            if (statusCode === 486) {
+              this.emit({ lastError: 'Linha ocupada (Busy)' })
+            } else if (statusCode === 487) {
+              // 487 Request Terminated é comum quando o número chamado desliga
               this.emit({ lastError: 'Chamada cancelada pelo destinatário' })
             } else {
               this.emit({ lastError: formatSipFailure(statusCode, reasonPhrase) })
