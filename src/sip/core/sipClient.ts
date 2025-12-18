@@ -359,28 +359,31 @@ export class SipClient {
 
   /**
    * Encerra a chamada atual:
+   * - Sessão estabelecida -> BYE (prioridade)
    * - Chamada de saída em progresso (dialing/ringing) -> CANCEL
    * - Chamada recebida (tocando) -> REJECT
-   * - Sessão estabelecida -> BYE
    */
   async hangup(): Promise<void> {
-    // Outgoing: CANCEL (dialing ou ringing)
-    if (this.inviter && canCancel(this.inviter)) {
-      await this.inviter.cancel().catch(() => {})
+    // Sessão estabelecida: BYE (verificar primeiro, antes de tentar cancelar)
+    const s = this.session
+    if (s && canSendBye(s)) {
+      await s.bye().catch(() => {})
       return
+    }
+
+    // Outgoing: CANCEL (dialing ou ringing) - só se não estiver estabelecida
+    if (this.inviter && canCancel(this.inviter)) {
+      // Verificar se o inviter não está em estado Established
+      if (this.inviter.state !== SessionState.Established) {
+        await this.inviter.cancel().catch(() => {})
+        return
+      }
     }
 
     // Incoming: REJECT
     if (this.invitation && canReject(this.invitation)) {
       await this.invitation.reject({ statusCode: 486, reasonPhrase: 'Busy Here' }).catch(() => {})
       this.clearCallState()
-      return
-    }
-
-    // Sessão estabelecida: BYE
-    const s = this.session
-    if (s && canSendBye(s)) {
-      await s.bye().catch(() => {})
       return
     }
   }

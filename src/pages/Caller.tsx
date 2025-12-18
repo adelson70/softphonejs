@@ -15,6 +15,7 @@ import {
   Video,
   UserPlus,
   Users,
+  Repeat,
 } from 'lucide-react'
 import { TopBar } from '../components/ui/TopBar'
 import { DialInput } from '../components/ui/DialInput'
@@ -30,6 +31,9 @@ export default function Caller() {
 
   const [dialValue, setDialValue] = useState('')
   const [showKeypad, setShowKeypad] = useState(true)
+  const [transferModalOpen, setTransferModalOpen] = useState(false)
+  const [transferType, setTransferType] = useState<'assisted' | 'blind' | null>(null)
+  const [transferTarget, setTransferTarget] = useState('')
 
   const canCall = useMemo(() => dialValue.trim().length > 0, [dialValue])
   const inCall = sip.snapshot.callStatus !== 'idle'
@@ -72,7 +76,19 @@ export default function Caller() {
   }
 
   async function handleHangup() {
-    await sip.hangup()
+    try {
+      await sip.hangup()
+    } catch (error) {
+      console.error('Erro ao encerrar chamada:', error)
+    }
+  }
+
+  function handleToggleMute() {
+    try {
+      sip.toggleMute()
+    } catch (error) {
+      console.error('Erro ao alternar mudo:', error)
+    }
   }
 
   function handleHistoryClick() {
@@ -81,6 +97,33 @@ export default function Caller() {
 
   function handleContactsClick() {
     navigate('/contatos')
+  }
+
+  function handleTransferOpen(type: 'assisted' | 'blind') {
+    setTransferType(type)
+    setTransferTarget('')
+    setTransferModalOpen(true)
+  }
+
+  function handleTransferClose() {
+    setTransferModalOpen(false)
+    setTransferType(null)
+    setTransferTarget('')
+  }
+
+  async function handleTransferConfirm() {
+    if (!transferType || !transferTarget.trim()) return
+
+    try {
+      if (transferType === 'assisted') {
+        await sip.transferAttended(transferTarget.trim())
+      } else {
+        await sip.transferBlind(transferTarget.trim())
+      }
+      handleTransferClose()
+    } catch (error) {
+      console.error('Erro ao transferir chamada:', error)
+    }
   }
 
   async function handleLogout() {
@@ -111,6 +154,51 @@ export default function Caller() {
 
   return (
     <div className="h-screen overflow-hidden bg-background text-text">
+      {/* Modal de Transferência */}
+      {transferModalOpen && transferType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-white/10 bg-background p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-semibold text-text">
+              {transferType === 'assisted' ? 'Transferir Assistido' : 'Transferir Cega'}
+            </h3>
+            <p className="mb-4 text-sm text-muted">
+              Digite o número ou extensão para transferir a chamada:
+            </p>
+            <input
+              type="text"
+              value={transferTarget}
+              onChange={(e) => setTransferTarget(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  void handleTransferConfirm()
+                } else if (e.key === 'Escape') {
+                  handleTransferClose()
+                }
+              }}
+              placeholder="Número destino"
+              autoFocus
+              className="mb-4 h-12 w-full rounded-xl border border-white/10 bg-background px-4 text-text placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleTransferClose}
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-text transition-colors hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleTransferConfirm()}
+                disabled={!transferTarget.trim()}
+                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-background transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Transferir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <TopBar
         onHistoryClick={handleHistoryClick}
         onContactsClick={handleContactsClick}
@@ -130,105 +218,88 @@ export default function Caller() {
 
         {/* Estado Established - Chamada Ativa */}
         {isEstablished ? (
-          <div className="flex h-full flex-col items-center justify-center px-4 py-8">
-            {/* Duração no topo */}
-            <div className="mb-4 flex items-center gap-2 text-primary">
+          <div className="flex h-full flex-col items-center px-4">
+            {/* Tempo no topo */}
+            <div className="flex items-center gap-2 text-primary">
               <PhoneCall size={16} />
               <span className="text-sm font-medium">{formatDuration(sip.callDurationSec)}</span>
             </div>
 
-            {/* Nome e número */}
+            {/* Número da ligação */}
             <div className="mb-6 text-center">
-              <h2 className="mb-2 text-2xl font-semibold text-text">{establishedContactName}</h2>
-              <p className="text-lg text-primary">{establishedContactNumber}</p>
+              <h2 className="text-2xl font-semibold text-text">{establishedContactNumber}</h2>
             </div>
 
-            {/* Foto de perfil */}
-            <div className="mb-8">
-              <Avatar size="xl" name={establishedContactName || undefined} />
-            </div>
 
-            {/* Opções de controle - Primeira linha */}
-            <div className="mb-6 grid grid-cols-3 gap-6">
+            {/* Opções de controle - Transferir assistido, Transferir cega, Deixar mudo */}
+            <div className="mb-8 flex items-center justify-center gap-6">
               <button
                 type="button"
-                onClick={() => void sip.toggleMute()}
+                onClick={() => handleTransferOpen('assisted')}
                 className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Mudo"
+                aria-label="Transferir assistido"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Repeat size={20} />
+                </div>
+                <span className="text-xs font-medium">Transferir assistido</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTransferOpen('blind')}
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Transferir cega"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
+                  <Repeat size={20} />
+                </div>
+                <span className="text-xs font-medium">Transferir cega</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleToggleMute()
+                }}
+                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
+                aria-label="Deixar mudo"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
                   {sip.snapshot.muted ? <MicOff size={20} /> : <Mic size={20} />}
                 </div>
-                <span className="text-xs font-medium">Mudo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowKeypad((p) => !p)}
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Teclado"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <Keyboard size={20} />
-                </div>
-                <span className="text-xs font-medium">Teclado</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => sip.toggleSpeaker()}
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Viva voz"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  {sip.speakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                </div>
-                <span className="text-xs font-medium">Viva voz</span>
+                <span className="text-xs font-medium">Deixar mudo</span>
               </button>
             </div>
 
-            {/* Opções de controle - Segunda linha */}
-            <div className="mb-8 grid grid-cols-3 gap-6">
-              <button
-                type="button"
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Video chamada"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <Video size={20} />
-                </div>
-                <span className="text-xs font-medium">Video chamada</span>
-              </button>
-              <button
-                type="button"
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Adicionar chamada"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <UserPlus size={20} />
-                </div>
-                <span className="text-xs font-medium">Adicionar chamada</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleContactsClick}
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Contatos"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <Users size={20} />
-                </div>
-                <span className="text-xs font-medium">Contatos</span>
-              </button>
+            {/* Dialpad - formato igual ao estado neutro */}
+            <div className="mb-8 flex flex-1 items-center justify-center">
+              <DialPad
+                className="mx-auto w-full max-w-sm"
+                onKeyPress={(k) => {
+                  // Sempre toca o som local do DTMF.
+                  // Só envia DTMF remoto quando a chamada estiver estabelecida.
+                  sip.sendDtmf(k, { playLocal: true, sendRemote: true })
+                }}
+                disabled={false}
+              />
             </div>
 
-            {/* Botão de encerrar */}
-            <button
-              type="button"
-              onClick={() => void sip.hangup()}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-danger text-background transition-colors hover:bg-danger/90"
-              aria-label="Encerrar chamada"
-            >
-              <PhoneOff size={28} strokeWidth={2.5} />
-            </button>
+            {/* Botão de terminar ligação */}
+            <div className="mt-auto pb-6">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  void handleHangup()
+                }}
+                className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-danger text-background transition-colors hover:bg-danger/90"
+                aria-label="Terminar ligação"
+              >
+                <PhoneOff size={28} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -333,10 +404,10 @@ export default function Caller() {
               <button
                 type="button"
                 onClick={() => void sip.hangup()}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-text transition-colors hover:bg-white/20"
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-danger text-background transition-colors hover:bg-danger/90"
                 aria-label="Cancelar"
               >
-                <X size={28} strokeWidth={2.5} />
+                <PhoneOff size={28} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -380,20 +451,6 @@ export default function Caller() {
           </>
         ) : null}
 
-        {/* Keypad durante chamada estabelecida (se habilitado) */}
-        {isEstablished && showKeypad ? (
-          <div className="fixed bottom-24 left-1/2 z-20 -translate-x-1/2">
-            <DialPad
-              className="mx-auto w-full max-w-sm"
-              onKeyPress={(k) => {
-                // Sempre toca o som local do DTMF.
-                // Só envia DTMF remoto quando a chamada estiver estabelecida.
-                sip.sendDtmf(k, { playLocal: true, sendRemote: true })
-              }}
-              disabled={false}
-            />
-          </div>
-        ) : null}
       </main>
     </div>
   )
