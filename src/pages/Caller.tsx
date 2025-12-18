@@ -228,15 +228,20 @@ export default function Caller() {
 
         {/* Renderização dinâmica dos estados */}
         {/* {isEstablished ? (
-          <EstablishedState
-            callDurationSec={sip.callDurationSec}
-            contactNumber={establishedContactNumber || ''}
-            onTransferOpen={handleTransferOpen}
-            onToggleMute={handleToggleMute}
-            onSendDtmf={(k) => sip.sendDtmf(k, { playLocal: true, sendRemote: true })}
-            onHangup={() => void handleHangup()}
-            isMuted={sip.snapshot.muted ?? false}
-          />
+         <EstablishedState
+          callDurationSec={sip.callDurationSec}
+          contactNumber={establishedContactNumber || ''}
+          contactName={establishedContactName}
+          speakerOn={sip.speakerOn}
+          onToggleSpeaker={sip.toggleSpeaker}
+          showKeypad={showKeypad}
+          onToggleKeypad={handleToggleKeypad}
+          onTransferOpen={handleTransferOpen}
+          onToggleMute={handleToggleMute}
+          onSendDtmf={(k) => sip.sendDtmf(k, { playLocal: true, sendRemote: true })}
+          onHangup={() => void handleHangup()}
+          isMuted={sip.snapshot.muted ?? false}
+        />
         ) : isIncoming ? (
           <IncomingState
             incomingCall={sip.snapshot.incoming ?? null}
@@ -279,6 +284,7 @@ export default function Caller() {
           onHangup={() => void handleHangup()}
           isMuted={sip.snapshot.muted ?? false}
         />
+          
       </main>
     </div>
   )

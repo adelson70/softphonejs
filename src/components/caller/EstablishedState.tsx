@@ -1,5 +1,5 @@
 import { ArrowRight, Grid3x3, Mic, MicOff, PhoneCall, Repeat, Volume2 } from 'lucide-react'
-import { DialPad } from '../ui/DialPad'
+import { CallKeypad } from './CallKeypad'
 import { Avatar } from '../ui/Avatar'
 import { HangupButton } from './HangupButton'
 
@@ -79,9 +79,8 @@ export function EstablishedState({
         {showKeypad && (
           <div className="absolute bottom-full left-1/2 mb-0 w-full -translate-x-1/2">
             <div className="overflow-hidden rounded-t-3xl bg-card/80 px-6 py-2 shadow-2xl">
-              <DialPad
-                className="w-full gap-1.5"
-                size="small"
+              <CallKeypad
+                className="w-full"
                 onKeyPress={(k) => {
                   onSendDtmf(k)
                 }}
