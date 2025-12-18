@@ -97,6 +97,32 @@ export class SipClient {
   }
 
   private clearCallState() {
+    // Limpa streams de áudio antes de limpar referências
+    const s = this.session
+    if (s) {
+      try {
+        const sdh = (s as any)?.sessionDescriptionHandler
+        const pc: RTCPeerConnection | undefined = sdh?.peerConnection
+        if (pc) {
+          // Para todos os tracks de áudio
+          pc.getReceivers().forEach((receiver) => {
+            if (receiver.track) {
+              receiver.track.stop()
+            }
+          })
+          pc.getSenders().forEach((sender) => {
+            if (sender.track) {
+              sender.track.stop()
+            }
+          })
+          // Fecha a conexão para parar qualquer áudio de ringback
+          pc.close().catch(() => {})
+        }
+      } catch (e) {
+        // Ignora erros ao limpar áudio
+      }
+    }
+
     this.session = undefined
     this.inviter = undefined
     this.invitation = undefined
@@ -114,7 +140,7 @@ export class SipClient {
     this.session = session
     this.emit({ callDirection: direction, sipSessionState: session.state })
 
-    session.stateChange.addListener((st) => {
+    const sessionStateListener = (st: SessionState) => {
       this.emit({ sipSessionState: st })
       if (st === SessionState.Establishing) {
         if (direction === 'outgoing') this.emit({ callStatus: 'dialing' })
@@ -122,8 +148,16 @@ export class SipClient {
       }
       if (st === SessionState.Established) this.emit({ callStatus: 'established' })
       if (st === SessionState.Terminating) this.emit({ callStatus: 'terminating' })
-      if (st === SessionState.Terminated) this.clearCallState()
-    })
+      // Garantir limpeza imediata quando sessão for terminada em qualquer estado
+      // Isso trata cancelamentos remotos durante dialing/ringing
+      if (st === SessionState.Terminated) {
+        // Remove o listener para evitar chamadas duplicadas
+        session.stateChange.removeListener(sessionStateListener)
+        this.clearCallState()
+      }
+    }
+    
+    session.stateChange.addListener(sessionStateListener)
   }
 
   async connectAndRegister(credentials: SipCredentials): Promise<void> {
@@ -249,15 +283,51 @@ export class SipClient {
     this.bindSession(inviter, 'outgoing')
     this.emit({ callStatus: 'dialing' })
 
+    // Listener adicional para detectar cancelamentos remotos durante o progresso
+    const stateListener = (st: SessionState) => {
+      // Se a sessão for terminada durante dialing/ringing, limpa imediatamente
+      if (st === SessionState.Terminated) {
+        // Verifica se ainda é a mesma sessão antes de limpar
+        if (this.inviter === inviter) {
+          this.clearCallState()
+        }
+        // Remove o listener para evitar chamadas duplicadas
+        inviter.stateChange.removeListener(stateListener)
+      }
+    }
+    inviter.stateChange.addListener(stateListener)
+
     try {
       await inviter.invite({
         requestDelegate: {
-          onProgress: () => this.emit({ callStatus: 'ringing' }),
+          onProgress: () => {
+            // Durante o progresso, o servidor pode enviar early media (ringback)
+            this.emit({ callStatus: 'ringing' })
+          },
           onReject: (response) => {
-            // Importante: não deixar a UI “presa” em failed (isso trava inputs/novas chamadas).
+            // Trata rejeições explícitas (486, 487, etc.)
+            // Importante: não deixar a UI "presa" em failed (isso trava inputs/novas chamadas).
             // A sessão pode terminar e depois o callback rodar fora de ordem.
+            const statusCode = response.message.statusCode
+            const reasonPhrase = response.message.reasonPhrase
+            
+            // Limpa o estado imediatamente para parar o áudio
             this.clearCallState()
-            this.emit({ lastError: formatSipFailure(response.message.statusCode, response.message.reasonPhrase) })
+            
+            // 487 Request Terminated é comum quando o número chamado desliga
+            if (statusCode === 487) {
+              this.emit({ lastError: 'Chamada cancelada pelo destinatário' })
+            } else {
+              this.emit({ lastError: formatSipFailure(statusCode, reasonPhrase) })
+            }
+            
+            // Remove o listener para evitar chamadas duplicadas
+            inviter.stateChange.removeListener(stateListener)
+          },
+          onAccept: () => {
+            // Chamada aceita - estado será atualizado pelo bindSession
+            // Remove o listener pois a chamada foi estabelecida
+            inviter.stateChange.removeListener(stateListener)
           },
         },
       })
@@ -286,21 +356,12 @@ export class SipClient {
 
   /**
    * Encerra a chamada atual:
-   * - Sessão estabelecida -> BYE
-   * - Chamada de saída em progresso -> CANCEL
+   * - Chamada de saída em progresso (dialing/ringing) -> CANCEL
    * - Chamada recebida (tocando) -> REJECT
+   * - Sessão estabelecida -> BYE
    */
   async hangup(): Promise<void> {
-    const s = this.session
-    if (!s) return
-
-    // Sessão estabelecida: BYE
-    if (canSendBye(s)) {
-      await s.bye().catch(() => {})
-      return
-    }
-
-    // Outgoing: CANCEL
+    // Outgoing: CANCEL (dialing ou ringing)
     if (this.inviter && canCancel(this.inviter)) {
       await this.inviter.cancel().catch(() => {})
       return
@@ -310,6 +371,13 @@ export class SipClient {
     if (this.invitation && canReject(this.invitation)) {
       await this.invitation.reject({ statusCode: 486, reasonPhrase: 'Busy Here' }).catch(() => {})
       this.clearCallState()
+      return
+    }
+
+    // Sessão estabelecida: BYE
+    const s = this.session
+    if (s && canSendBye(s)) {
+      await s.bye().catch(() => {})
       return
     }
   }

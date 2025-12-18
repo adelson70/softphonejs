@@ -16,7 +16,9 @@ export function canSendBye(session: Session | undefined): boolean {
 
 export function canCancel(inviter: Inviter | undefined): boolean {
   if (!inviter) return false
-  return inviter.state === SessionState.Establishing
+  // Permite cancelar em qualquer estado que não seja Terminated
+  // Isso inclui o estado Initial (dialing) e Establishing (ringing)
+  return inviter.state !== SessionState.Terminated
 }
 
 export function canReject(invitation: Invitation | undefined): boolean {

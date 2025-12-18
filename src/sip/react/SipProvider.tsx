@@ -65,6 +65,14 @@ export function SipProvider({ children }: PropsWithChildren) {
     const client = clientRef.current
     const audioEl = remoteAudioRef.current
     if (!client || !audioEl) return
+    
+    // Se a chamada foi cancelada/terminada, para o áudio imediatamente
+    if (snapshot.callStatus === 'idle' || snapshot.callStatus === 'terminating' || snapshot.callStatus === 'terminated') {
+      audioEl.pause()
+      audioEl.srcObject = null
+      return
+    }
+    
     if (snapshot.callStatus !== 'established') return
     const session = client.getActiveSession()
     if (!session) return

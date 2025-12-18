@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Keyboard,
@@ -30,8 +30,6 @@ export default function Caller() {
 
   const [dialValue, setDialValue] = useState('')
   const [showKeypad, setShowKeypad] = useState(true)
-  const [endedBanner, setEndedBanner] = useState(false)
-  const prevCallStatusRef = useRef(sip.snapshot.callStatus)
 
   const canCall = useMemo(() => dialValue.trim().length > 0, [dialValue])
   const inCall = sip.snapshot.callStatus !== 'idle'
@@ -59,18 +57,6 @@ export default function Caller() {
     }
     return dialValue || ''
   }, [isEstablished, sip.snapshot.callDirection, sip.snapshot.incoming, dialValue])
-
-  useEffect(() => {
-    const prev = prevCallStatusRef.current
-    const next = sip.snapshot.callStatus
-    prevCallStatusRef.current = next
-    // Mostra “encerrada” quando sai de qualquer estado de chamada para idle
-    if (prev !== 'idle' && next === 'idle') {
-      setEndedBanner(true)
-      const t = window.setTimeout(() => setEndedBanner(false), 1500)
-      return () => window.clearTimeout(t)
-    }
-  }, [sip.snapshot.callStatus])
 
   function appendKey(key: string) {
     setDialValue((prev) => (prev + key).slice(0, 128))
@@ -139,13 +125,6 @@ export default function Caller() {
               <span className="h-2.5 w-2.5 rounded-full bg-success" aria-hidden="true" />
               <span className="font-semibold">{connectedAs || 'Conectado'}</span>
             </div>
-          </div>
-        ) : null}
-
-        {/* Banner curto de encerrada */}
-        {endedBanner ? (
-          <div className="fixed bottom-4 right-4 z-30 rounded-full border border-white/10 bg-background/80 px-3 py-2 text-xs font-semibold text-danger backdrop-blur">
-            Chamada encerrada
           </div>
         ) : null}
 
@@ -349,30 +328,6 @@ export default function Caller() {
               </p>
             </div>
 
-            {/* Botões de ação no topo */}
-            <div className="mb-12 flex items-center gap-8">
-              <button
-                type="button"
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Mensagem"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <MessageSquare size={20} />
-                </div>
-                <span className="text-xs font-medium">Mensagem</span>
-              </button>
-              <button
-                type="button"
-                className="flex flex-col items-center gap-2 text-muted transition-colors hover:text-text"
-                aria-label="Lembrete"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-background">
-                  <Clock size={20} />
-                </div>
-                <span className="text-xs font-medium">Lembrete</span>
-              </button>
-            </div>
-
             {/* Botão de cancelar */}
             <div className="mb-8">
               <button
@@ -383,12 +338,6 @@ export default function Caller() {
               >
                 <X size={28} strokeWidth={2.5} />
               </button>
-            </div>
-
-            {/* Indicador de modo silencioso */}
-            <div className="flex items-center gap-2 text-muted">
-              <BellOff size={16} />
-              <span className="text-xs font-medium">Silencioso</span>
             </div>
           </div>
         ) : null}
