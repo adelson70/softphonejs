@@ -227,7 +227,7 @@ export default function Caller() {
         ) : null}
 
         {/* Renderização dinâmica dos estados */}
-        {/* {isEstablished ? (
+        {isEstablished ? (
          <EstablishedState
           callDurationSec={sip.callDurationSec}
           contactNumber={establishedContactNumber || ''}
@@ -269,21 +269,7 @@ export default function Caller() {
             isRegistered={sip.snapshot.connection === 'registered'}
             showKeypad={showKeypad}
           />
-        )} */}
-        <EstablishedState
-          callDurationSec={sip.callDurationSec}
-          contactNumber={establishedContactNumber || ''}
-          contactName={establishedContactName}
-          speakerOn={sip.speakerOn}
-          onToggleSpeaker={sip.toggleSpeaker}
-          showKeypad={showKeypad}
-          onToggleKeypad={handleToggleKeypad}
-          onTransferOpen={handleTransferOpen}
-          onToggleMute={handleToggleMute}
-          onSendDtmf={(k) => sip.sendDtmf(k, { playLocal: true, sendRemote: true })}
-          onHangup={() => void handleHangup()}
-          isMuted={sip.snapshot.muted ?? false}
-        />
+        )}
           
       </main>
     </div>
