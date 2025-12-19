@@ -1,15 +1,39 @@
 import { BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { existsSync } from 'node:fs'
 import { VITE_DEV_SERVER_URL, RENDERER_DIST } from '../app/paths'
 import dotenv from 'dotenv'
 dotenv.config()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// Função para obter o caminho do ícone
+function getIconPath(): string | undefined {
+  const appRoot = process.env.APP_ROOT || path.join(__dirname, '..', '..')
+  const iconPath = path.join(appRoot, 'build', 'icon.png')
+  
+  // Tenta diferentes formatos dependendo da plataforma
+  if (process.platform === 'win32') {
+    const icoPath = path.join(appRoot, 'build', 'icon.ico')
+    if (existsSync(icoPath)) {
+      return icoPath
+    }
+  }
+  
+  if (existsSync(iconPath)) {
+    return iconPath
+  }
+  
+  // Se não encontrar ícone, retorna undefined (usa o padrão do Electron)
+  return undefined
+}
+
 export function createMainWindow(): BrowserWindow {
+  const iconPath = getIconPath()
+  
   const win = new BrowserWindow({
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    ...(iconPath && { icon: iconPath }),
     width: Number(process.env.WINDOW_WIDTH),
     height: Number(process.env.WINDOW_HEIGHT),
     resizable: false,
