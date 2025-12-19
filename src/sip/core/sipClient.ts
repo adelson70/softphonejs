@@ -393,6 +393,7 @@ export class SipClient {
 
   /**
    * Transferência cega (REFER) do diálogo atual para o destino.
+   * Após enviar o REFER com sucesso, encerra automaticamente a chamada no softphone.
    */
   async transferBlind(target: string): Promise<void> {
     if (!this.session) throw new Error('Nenhuma chamada ativa')
@@ -404,6 +405,9 @@ export class SipClient {
         // Opcional: pode mapear notifies para UI depois
       },
     })
+    
+    // Encerra a chamada automaticamente após a transferência cega ser enviada
+    await this.hangup()
   }
 
   /**

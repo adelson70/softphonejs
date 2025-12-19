@@ -201,7 +201,7 @@ export default function Contatos() {
           ) : (
             <div
               className="scrollable-table-container"
-              style={{ maxHeight: 'calc(100vh - 320px)' }}
+              style={{ maxHeight: 'calc(100vh - 240px)' }}
             >
               <style>{`
                 .scrollable-table-container {
@@ -211,70 +211,71 @@ export default function Contatos() {
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar {
-                  width: 8px;
+                  width: 4px;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-track {
-                  background: rgba(255, 255, 255, 0.05);
-                  border-radius: 4px;
+                  background: transparent;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-thumb {
-                  background: rgba(255, 255, 255, 0.2);
-                  border-radius: 4px;
+                  background: rgba(255, 255, 255, 0.15);
+                  border-radius: 2px;
                   transition: background 0.2s ease;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-thumb:hover {
-                  background: rgba(255, 255, 255, 0.3);
+                  background: rgba(255, 255, 255, 0.25);
                 }
                 
                 .scrollable-table-container {
                   scrollbar-width: thin;
-                  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+                  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
                 }
               `}</style>
-              <table className="w-full border-collapse text-xs">
-                <thead className="sticky top-0 z-10 bg-card">
-                  <tr className="border-b border-white/10">
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted">Nome</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted">Número</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredContacts.map((contact) => (
-                    <tr
-                      key={contact.id}
-                      className="border-b border-white/5 transition-colors hover:bg-white/5 cursor-pointer"
-                      onClick={() => handleCall(contact.number)}
-                    >
-                      <td className="px-3 py-2">
-                        <span className="text-xs text-text">{contact.name}</span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span className="text-xs text-text">{contact.number}</span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              void handleDeleteContact(contact.id)
-                            }}
-                            className="rounded-lg p-1.5 text-danger transition-colors hover:bg-danger/10"
-                            aria-label="Excluir contato"
-                            title="Excluir contato"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </td>
+              <div className="pb-4">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="sticky top-0 z-10 bg-card">
+                    <tr className="border-b border-white/10">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted">Nome</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted">Número</th>
+                      <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredContacts.map((contact) => (
+                      <tr
+                        key={contact.id}
+                        className="border-b border-white/5 transition-colors hover:bg-white/5 cursor-pointer"
+                        onClick={() => handleCall(contact.number)}
+                      >
+                        <td className="px-3 py-2">
+                          <span className="text-xs text-text">{contact.name}</span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="text-xs text-text">{contact.number}</span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void handleDeleteContact(contact.id)
+                              }}
+                              className="rounded-lg p-1.5 text-danger transition-colors hover:bg-danger/10"
+                              aria-label="Excluir contato"
+                              title="Excluir contato"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </Card>

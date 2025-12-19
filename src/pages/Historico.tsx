@@ -214,7 +214,7 @@ export default function Historico() {
           ) : (
             <div
               className="scrollable-table-container"
-              style={{ maxHeight: 'calc(100vh - 320px)' }}
+              style={{ maxHeight: 'calc(100vh - 240px)' }}
             >
               <style>{`
                 .scrollable-table-container {
@@ -224,34 +224,35 @@ export default function Historico() {
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar {
-                  width: 8px;
+                  width: 4px;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-track {
-                  background: rgba(255, 255, 255, 0.05);
-                  border-radius: 4px;
+                  background: transparent;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-thumb {
-                  background: rgba(255, 255, 255, 0.2);
-                  border-radius: 4px;
+                  background: rgba(255, 255, 255, 0.15);
+                  border-radius: 2px;
                   transition: background 0.2s ease;
                 }
                 
                 .scrollable-table-container::-webkit-scrollbar-thumb:hover {
-                  background: rgba(255, 255, 255, 0.3);
+                  background: rgba(255, 255, 255, 0.25);
                 }
                 
                 .scrollable-table-container {
                   scrollbar-width: thin;
-                  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+                  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
                 }
               `}</style>
-              <CallHistoryTable 
-                entries={filteredHistory} 
-                onCall={handleCall}
-                onAddContact={handleAddContact}
-              />
+              <div className="pb-4">
+                <CallHistoryTable 
+                  entries={filteredHistory} 
+                  onCall={handleCall}
+                  onAddContact={handleAddContact}
+                />
+              </div>
             </div>
           )}
         </Card>
