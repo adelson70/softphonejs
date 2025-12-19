@@ -94,6 +94,15 @@ export function SipProvider({ children }: PropsWithChildren) {
   // Histórico de chamadas
   useCallHistory({ snapshot })
 
+  // Restaura e foca a janela quando uma chamada entrante for recebida
+  useEffect(() => {
+    if (snapshot.callStatus === 'incoming' && window.ipcRenderer) {
+      window.ipcRenderer.invoke('window:restoreAndFocus').catch((error) => {
+        console.error('Erro ao restaurar janela:', error)
+      })
+    }
+  }, [snapshot.callStatus])
+
   const value = useMemo<SipContextValue>(() => {
     const client = clientRef.current!
 
