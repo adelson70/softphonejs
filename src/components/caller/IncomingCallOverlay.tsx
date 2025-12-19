@@ -1,0 +1,43 @@
+import { useLocation } from 'react-router-dom'
+import { useSip } from '../../sip/react/useSip'
+import { IncomingState } from './IncomingState'
+
+export function IncomingCallOverlay() {
+  const location = useLocation()
+  const sip = useSip()
+  
+  const isIncoming = sip.snapshot.callStatus === 'incoming'
+  const isLoginPage = location.pathname === '/'
+  
+  // Não mostra o overlay na página de login
+  if (!isIncoming || isLoginPage) {
+    return null
+  }
+
+  async function handleReject() {
+    try {
+      await sip.reject()
+    } catch (error) {
+      console.error('Erro ao rejeitar chamada:', error)
+    }
+  }
+
+  async function handleAnswer() {
+    try {
+      await sip.answer()
+    } catch (error) {
+      console.error('Erro ao atender chamada:', error)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+      <IncomingState
+        incomingCall={sip.snapshot.incoming ?? null}
+        onAnswer={handleAnswer}
+        onReject={handleReject}
+      />
+    </div>
+  )
+}
+

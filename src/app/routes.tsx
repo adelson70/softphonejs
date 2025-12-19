@@ -4,6 +4,7 @@ import Login from '../pages/Login'
 import Historico from '../pages/Historico'
 import Contatos from '../pages/Contatos'
 import { RequireRegistered } from '../sip/react/RequireRegistered'
+import { IncomingCallOverlay } from '../components/caller/IncomingCallOverlay'
 
 export default function AppRoutes() {
   return (
@@ -35,6 +36,7 @@ export default function AppRoutes() {
           }
         />
       </Routes>
+      <IncomingCallOverlay />
     </HashRouter>
   )
 }

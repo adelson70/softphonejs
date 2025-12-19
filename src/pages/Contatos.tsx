@@ -117,19 +117,23 @@ export default function Contatos() {
     }
   }
 
+  const isIncoming = sip.snapshot.callStatus === 'incoming'
+
   return (
     <div className="h-screen overflow-hidden bg-background text-text">
-      <TopBar
-        active="contacts"
-        onDialerClick={() => navigate('/caller')}
-        onHistoryClick={() => navigate('/historico')}
-        onContactsClick={() => navigate('/contatos')}
-        onLogout={() => {
-          void clearStorage().catch(() => {})
-          void sip.unregisterAndDisconnect().catch(() => {})
-          navigate('/')
-        }}
-      />
+      {!isIncoming && (
+        <TopBar
+          active="contacts"
+          onDialerClick={() => navigate('/caller')}
+          onHistoryClick={() => navigate('/historico')}
+          onContactsClick={() => navigate('/contatos')}
+          onLogout={() => {
+            void clearStorage().catch(() => {})
+            void sip.unregisterAndDisconnect().catch(() => {})
+            navigate('/')
+          }}
+        />
+      )}
 
       <main className="mx-auto h-full max-w-6xl px-4 pb-6 pt-16">
         <div className="flex items-center justify-between gap-3">

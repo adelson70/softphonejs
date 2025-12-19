@@ -5,7 +5,6 @@ import { useSip } from '../sip/react/useSip'
 import { clearStorage } from '../services/storageService'
 import { IdleState } from '../components/caller/IdleState'
 import { EstablishedState } from '../components/caller/EstablishedState'
-import { IncomingState } from '../components/caller/IncomingState'
 import { OutgoingState } from '../components/caller/OutgoingState'
 import { setCurrentDialNumber } from '../sip/react/useCallHistory'
 
@@ -225,13 +224,15 @@ export default function Caller() {
           </div>
         </div>
       )}
-      <TopBar
-        onDialerClick={handleDialerClick}
-        onHistoryClick={handleHistoryClick}
-        onContactsClick={handleContactsClick}
-        onLogout={handleLogout}
-        active="dialer"
-      />
+      {!isIncoming && (
+        <TopBar
+          onDialerClick={handleDialerClick}
+          onHistoryClick={handleHistoryClick}
+          onContactsClick={handleContactsClick}
+          onLogout={handleLogout}
+          active="dialer"
+        />
+      )}
 
       <main className="mx-auto flex h-full min-h-0 max-w-2xl flex-col overflow-hidden px-4 pb-6 pt-24">
         {/* Status centralizado no topo (não atrapalha o input) */}
@@ -260,12 +261,6 @@ export default function Caller() {
           onHangup={() => void handleHangup()}
           isMuted={sip.snapshot.muted ?? false}
         />
-        ) : isIncoming ? (
-          <IncomingState
-            incomingCall={sip.snapshot.incoming ?? null}
-            onAnswer={() => void sip.answer()}
-            onReject={() => void sip.reject()}
-          />
         ) : isOutgoing ? (
           <OutgoingState
             dialValue={dialValue}
