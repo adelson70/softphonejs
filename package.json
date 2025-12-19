@@ -2,7 +2,25 @@
   "name": "Echo",
   "private": true,
   "version": "1.0.0",
+  "description": "Softphone SIP multiplataforma com interface moderna e intuitiva para chamadas VoIP profissionais. Disponível para Windows, macOS e Linux com recursos avançados de gerenciamento de chamadas, histórico completo, agenda de contatos e controle de áudio.",
   "type": "module",
+  "author": "adelson70",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adelson70/softphonejs"
+  },
+  "homepage": "https://echo-landingpage-eta.vercel.app/",
+  "keywords": [
+    "softphone",
+    "sip",
+    "voip",
+    "electron",
+    "react",
+    "typescript",
+    "webrtc",
+    "telephony",
+    "call-management"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
