@@ -68,3 +68,4 @@ export async function getContactByNumber(number: string): Promise<Contact | null
   return contacts.find(c => c.number === number) || null
 }
 
+
