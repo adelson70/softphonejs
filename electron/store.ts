@@ -8,8 +8,11 @@ const isAppImage = () => {
   if (process.platform !== 'linux') {
     return false;
   }
-  // AppImage define a variável de ambiente APPIMAGE
-  return !!process.env.APPIMAGE || process.execPath.includes('.mount_');
+  // AppImage define a variável de ambiente APPIMAGE com o caminho completo
+  // Também verifica se o execPath contém .mount_ (diretório temporário de montagem)
+  return !!process.env.APPIMAGE || 
+         process.execPath.includes('.mount_') || 
+         process.execPath.endsWith('.AppImage');
 };
 
 // Configura o caminho de dados para ser portátil (ao lado do executável)
@@ -73,18 +76,22 @@ export interface CallHistoryEntry {
 const dataPath = getPortableDataPath();
 
 // Garante que o diretório existe antes de inicializar o Store
+// Isso é crítico para AppImage onde o diretório pode não existir
+let finalDataPath = dataPath;
 if (dataPath) {
   try {
-    fs.mkdirSync(dataPath, { recursive: true });
+    // Cria o diretório recursivamente (cria todos os diretórios pais necessários)
+    fs.mkdirSync(dataPath, { recursive: true, mode: 0o755 });
   } catch (error) {
     console.error('Erro ao criar diretório de dados:', error);
-    // Se falhar, usa o padrão do sistema
+    // Se falhar ao criar o diretório personalizado, usa o padrão do sistema
+    finalDataPath = undefined;
   }
 }
 
 export const appStore = new Store({
     name: 'softphone-app',
-    cwd: dataPath, // Salva na pasta local ao invés do diretório do sistema
+    cwd: finalDataPath, // Salva na pasta local ao invés do diretório do sistema
     defaults: {
         sip: {} as SipConfig,
         contacts: [] as Contact[],

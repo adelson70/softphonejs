@@ -34,8 +34,8 @@ export function createMainWindow(): BrowserWindow {
   
   const win = new BrowserWindow({
     ...(iconPath && { icon: iconPath }),
-    width: Number(process.env.WINDOW_WIDTH),
-    height: Number(process.env.WINDOW_HEIGHT),
+    width: Number(process.env.WINDOW_WIDTH) || 450,
+    height: Number(process.env.WINDOW_HEIGHT) || 700,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
