@@ -13,28 +13,28 @@
   ],
   "mac": {
     "target": [
-      "dmg"
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
     ],
     "icon": "build/icon.icns",
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}-${arch}.${ext}"
   },
   "win": {
     "target": [
       {
-        "target": "nsis",
+        "target": "portable",
         "arch": [
           "x64"
         ]
       }
     ],
     "icon": "build/icon.ico",
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
-  },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "artifactName": "${productName}-Windows-${version}-Portable.${ext}",
+    "sign": null,
+    "signDlls": false,
+    "signingHashAlgorithms": []
   },
   "linux": {
     "target": [

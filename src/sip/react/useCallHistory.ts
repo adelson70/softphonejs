@@ -22,7 +22,6 @@ export function useCallHistory({ snapshot, currentDialNumber: dialNumber }: UseC
   const prevCallStatusRef = useRef(snapshot.callStatus)
 
   useEffect(() => {
-    const prevSnapshot = prevSnapshotRef.current
     const prevCallStatus = prevCallStatusRef.current
     const currentCallStatus = snapshot.callStatus
 

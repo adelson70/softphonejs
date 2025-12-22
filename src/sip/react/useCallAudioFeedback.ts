@@ -20,7 +20,6 @@ export function useCallAudioFeedback(snapshot: SipClientSnapshot): void {
 
   useEffect(() => {
     const prevStatus = prevStatusRef.current
-    const prevDirection = prevDirectionRef.current
     const prevError = prevErrorRef.current
     const currentStatus = snapshot.callStatus
     const currentDirection = snapshot.callDirection
@@ -89,11 +88,14 @@ export function useCallAudioFeedback(snapshot: SipClientSnapshot): void {
         wasPlayingOutgoingRef.current = true
         wasPlayingIngoingRef.current = false
       }
-      // Se a chamada foi estabelecida, para o som
-      if (currentStatus === 'established') {
-        audioFeedbackService.stop()
-        wasPlayingOutgoingRef.current = false
-      }
+    } else if (
+      wasPlayingOutgoingRef.current &&
+      (prevStatus === 'dialing' || prevStatus === 'ringing') &&
+      currentStatus === 'established'
+    ) {
+      // Se a chamada foi estabelecida (transição de dialing/ringing para established), para o som
+      audioFeedbackService.stop()
+      wasPlayingOutgoingRef.current = false
     } else if (wasPlayingOutgoingRef.current && currentStatus !== 'dialing' && currentStatus !== 'ringing') {
       // Para outgoing se não está mais em dialing/ringing
       audioFeedbackService.stop()
@@ -108,13 +110,16 @@ export function useCallAudioFeedback(snapshot: SipClientSnapshot): void {
         wasPlayingIngoingRef.current = true
         wasPlayingOutgoingRef.current = false
       }
-      // Se a chamada foi estabelecida, para o som
-      if (currentStatus === 'established') {
-        audioFeedbackService.stop()
-        wasPlayingIngoingRef.current = false
-      }
-    } else if (wasPlayingIngoingRef.current && currentStatus !== 'incoming') {
-      // Para ingoing se não está mais em incoming
+    } else if (
+      wasPlayingIngoingRef.current &&
+      prevStatus === 'incoming' &&
+      currentStatus === 'established'
+    ) {
+      // Se a chamada foi estabelecida (transição de incoming para established), para o som
+      audioFeedbackService.stop()
+      wasPlayingIngoingRef.current = false
+    } else if (wasPlayingIngoingRef.current && prevStatus === 'incoming') {
+      // Para ingoing se não está mais em incoming (já estamos no else, então não é incoming)
       audioFeedbackService.stop()
       wasPlayingIngoingRef.current = false
     }
