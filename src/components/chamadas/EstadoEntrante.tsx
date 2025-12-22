@@ -34,8 +34,8 @@ export function IncomingState({ incomingCall, onAnswer, onReject }: PropsEstadoE
 
       {/* Botões principais de ação */}
       <div className="mb-8 flex items-center gap-8">
-        <HangupButton onClick={onReject} ariaLabel="Recusar" />
         <AnswerButton onClick={onAnswer} ariaLabel="Atender" />
+        <HangupButton onClick={onReject} ariaLabel="Recusar" />
       </div>
 
     </div>
