@@ -1,7 +1,7 @@
 {
   "name": "Echo",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Softphone SIP multiplataforma com interface moderna e intuitiva para chamadas VoIP profissionais. Disponível para Windows, macOS e Linux com recursos avançados de gerenciamento de chamadas, histórico completo, agenda de contatos e controle de áudio. Suporte a UDP, TCP e WebSocket.",
   "type": "module",
   "author": "adelson70",
