@@ -34,6 +34,9 @@ contextBridge.exposeInMainWorld('storage', {
   clear() {
     return ipcRenderer.invoke('store:clear')
   },
+  delete(key: string) {
+    return ipcRenderer.invoke('store:delete', key)
+  },
 })
 
 // --------- Expose Native SIP API to the Renderer process ---------

@@ -13,5 +13,9 @@ export function setupStoreIPC(): void {
   ipcMain.handle('store:clear', () => {
     appStore.clear()
   })
+
+  ipcMain.handle('store:delete', (_event, key: string) => {
+    appStore.delete(key)
+  })
 }
 

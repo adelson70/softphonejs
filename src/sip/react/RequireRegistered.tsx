@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadSipConfig } from '../config/sipConfigStore'
+import { loadSipConfig, clearSipConfig } from '../config/sipConfigStore'
 import { useSip } from './useSip'
 
 export function RequireRegistered({ children }: PropsWithChildren) {
   const sip = useSip()
   const navigate = useNavigate()
   const startedRef = useRef(false)
+  const registrationAbortedRef = useRef(false)
   const [label, setLabel] = useState<string>('')
 
   const isRegistered = sip.snapshot.connection === 'registered'
@@ -32,6 +33,7 @@ export function RequireRegistered({ children }: PropsWithChildren) {
   useEffect(() => {
     if (shouldRenderChildren) return
     if (startedRef.current) return
+    if (registrationAbortedRef.current) return
     startedRef.current = true
 
     ;(async () => {
@@ -44,6 +46,10 @@ export function RequireRegistered({ children }: PropsWithChildren) {
       setLabel(`${cfg.username}@${cfg.server}`)
 
       try {
+        // Verificar novamente se não foi cancelado antes de iniciar registro
+        if (registrationAbortedRef.current) {
+          return
+        }
         await sip.connectAndRegister({
           username: cfg.username,
           password: cfg.password,
@@ -52,7 +58,10 @@ export function RequireRegistered({ children }: PropsWithChildren) {
           protocol: cfg.protocol,
         })
       } catch {
-        navigate('/')
+        // Só navegar para login se não foi explicitamente cancelado
+        if (!registrationAbortedRef.current) {
+          navigate('/')
+        }
       }
     })()
   }, [shouldRenderChildren, navigate, sip])
@@ -127,7 +136,30 @@ export function RequireRegistered({ children }: PropsWithChildren) {
           <button
             type="button"
             className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-xl border border-white/10 bg-background px-4 text-sm font-semibold text-text transition hover:bg-white/5"
-            onClick={() => navigate('/')}
+            onClick={async () => {
+              // Marcar que o registro foi cancelado
+              registrationAbortedRef.current = true
+              
+              try {
+                // Cancelar registro/desconectar se estiver em andamento
+                await sip.unregisterAndDisconnect()
+              } catch (error) {
+                console.warn('[RequireRegistered] Erro ao desconectar:', error)
+              }
+              
+              try {
+                // Limpar credenciais do cache
+                await clearSipConfig()
+              } catch (error) {
+                console.warn('[RequireRegistered] Erro ao limpar credenciais:', error)
+              }
+              
+              // Resetar flag de início para permitir nova tentativa
+              startedRef.current = false
+              
+              // Navegar para o login
+              navigate('/')
+            }}
           >
             Voltar para o login
           </button>

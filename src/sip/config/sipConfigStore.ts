@@ -1,5 +1,5 @@
 import type { SipConfig } from '../../../electron/store'
-import { getStorage, setStorage } from '../../services/servicoArmazenamento'
+import { getStorage, setStorage, deleteStorage } from '../../services/servicoArmazenamento'
 
 const SIP_KEY = 'sip'
 
@@ -16,6 +16,11 @@ export async function loadSipConfig(): Promise<SipConfig | null> {
 
 export async function saveSipConfig(next: SipConfig): Promise<void> {
   await setStorage(SIP_KEY, next)
+}
+
+export async function clearSipConfig(): Promise<void> {
+  // Remove completamente as credenciais do cache
+  await deleteStorage(SIP_KEY)
 }
 
 

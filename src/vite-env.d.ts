@@ -5,6 +5,7 @@ interface Window {
     get(key: string): Promise<any>
     set(key: string, value: any): Promise<void>
     clear(): Promise<void>
+    delete(key: string): Promise<void>
   }
   ipcRenderer: {
     on(channel: string, listener: (event: any, ...args: any[]) => void): void

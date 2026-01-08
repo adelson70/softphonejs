@@ -47,8 +47,24 @@ export async function limparArmazenamento(): Promise<void> {
   }
 }
 
+export async function deletarArmazenamento(chave: string): Promise<void> {
+  // Preferência: Electron Store via preload (contextBridge)
+  if (typeof window !== 'undefined' && (window as any).storage?.delete) {
+    await window.storage.delete(chave)
+    return
+  }
+
+  // Fallback (browser)
+  if (typeof window !== 'undefined' && window.localStorage) {
+    console.warn('[storageService] window.storage não está disponível; deletando de localStorage (modo browser).')
+    window.localStorage.removeItem(chave)
+    return
+  }
+}
+
 // Aliases para manter compatibilidade durante a transição
 export const getStorage = obterArmazenamento
 export const setStorage = definirArmazenamento
 export const clearStorage = limparArmazenamento
+export const deleteStorage = deletarArmazenamento
 
