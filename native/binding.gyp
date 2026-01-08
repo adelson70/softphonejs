@@ -79,7 +79,12 @@
             "PJ_IS_BIG_ENDIAN=0"
           ],
           "libraries": [
-            "-L<(module_root_dir)/deps/pjproject/lib",
+            "-L<(module_root_dir)/deps/pjproject/pjsip/lib",
+            "-L<(module_root_dir)/deps/pjproject/pjmedia/lib",
+            "-L<(module_root_dir)/deps/pjproject/pjnath/lib",
+            "-L<(module_root_dir)/deps/pjproject/pjlib-util/lib",
+            "-L<(module_root_dir)/deps/pjproject/pjlib/lib",
+            "-L<(module_root_dir)/deps/pjproject/third_party/lib",
             "-Wl,--start-group",
             "-lpjsua-x86_64-unknown-linux-gnu",
             "-lpjsip-ua-x86_64-unknown-linux-gnu",
@@ -93,11 +98,14 @@
             "-lpj-x86_64-unknown-linux-gnu",
             "-lsrtp-x86_64-unknown-linux-gnu",
             "-lresample-x86_64-unknown-linux-gnu",
+            "-lspeex-x86_64-unknown-linux-gnu",
+            "-lgsmcodec-x86_64-unknown-linux-gnu",
+            "-lg7221codec-x86_64-unknown-linux-gnu",
+            "-lilbccodec-x86_64-unknown-linux-gnu",
             "-Wl,--end-group",
             "-lasound",
             "-lpthread",
-            "-lm",
-            "-luuid"
+            "-lm"
           ],
           "cflags_cc": [
             "-fPIC",

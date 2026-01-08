@@ -1,0 +1,1 @@
+cmd_Release/pjsip_addon.node := ln -f "Release/obj.target/pjsip_addon.node" "Release/pjsip_addon.node" 2>/dev/null || (rm -rf "Release/pjsip_addon.node" && cp -af "Release/obj.target/pjsip_addon.node" "Release/pjsip_addon.node")
